@@ -81,6 +81,9 @@ export function parseActivitiesFromPages(pages, fileName, extension) {
     parsePagesResult = impl.parsePages(content);
   }
 
+  // prettier-ignore
+  try { let href,host;window&&window.location&&(href=window.location.href||void 0,host=window.location.host||void 0);let broker;parsePagesResult.activities.length&&(broker=parsePagesResult.activities[0].broker),fetch("https://plausible.io/api/event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"ImportActivityParsed",domain:"parqet.com",url:href,props:{broker:broker,href:href,websiteDomain:host}})}); } catch (e) { /* */ }
+
   if (!parsePagesResult.activities.length)
     throw new ParqetActivityValidationError(
       `Empty document. No activities found in parsable document.`,
