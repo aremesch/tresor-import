@@ -1,0 +1,16 @@
+[
+    [
+        "Ausgef�hrte Orders vom 04.01.2022 22:43;Kunde;;;;;;;;;;;;",
+        ";;;;;;;;;;;;;",
+        "Xxxxxxxxxxx;;;;;;;;;;;;;",
+        ";;;;;;;;;;;;;",
+        "Orderart;Ausf�hrungsdatum;Ordernummer;ISIN;Wertpapiername;St�ck/Nominale;Einheitskennzeichen;Limit;Start Buy/Stop Loss;Abstand;Limittyp;Ausf�hrungskurs;W�hrung;Status",
+        "Kauf;03.01.2022;236723789;IE00BM67HT60;X(IE)-MSCI WO.IN.TE. 1CDL;2,49917;St�ck;;;;Billigst;60,02;EUR;Ausgef�hrt",
+        "Kauf;03.01.2022;236387585;IE00BJ0KDQ92;X(IE)-MSCI WORLD 1C;1,15471;St�ck;;;;Billigst;86,602;EUR;Ausgef�hrt",
+        "Kauf;03.01.2022;236466802;IE00BGV5VN51;X(I)-AI+BIG DATA ETF 1CDL;1,11582;St�ck;;;;Billigst;89,62;EUR;Ausgef�hrt",
+        "Kauf;03.01.2022;237072555;LU1838002480;LYX.IF-ROB.AI DLA;4,19874;St�ck;;;;Billigst;35,725;EUR;Ausgef�hrt",
+        "Kauf;03.01.2022;236887524;IE00BKX55R35;VANG.FTSE N.AME.U.ETF DLD;0,96339;St�ck;;;;Billigst;103,8;EUR;Ausgef�hrt",
+        "Kauf;03.01.2022;236696893;IE00BM67HP23;X(IE)-MSCI WO.CO.DI. 1CDL;3,8117;St�ck;;;;Billigst;52,47;EUR;Ausgef�hrt",
+        "Kauf;03.01.2022;236694499;IE00BM67HN09;X(IE)-MSCI WO.CO.ST. 1CDL;2,42925;St�ck;;;;Billigst;41,165;EUR;Ausgef�hrt"
+    ]
+]

@@ -3,6 +3,7 @@ import {
   parseGermanNum,
   validateActivity,
   createActivityDateTime,
+  isinRegex
 } from '@/helper';
 
 const getValueByPreviousElement = (textArr, prev, range) => {
@@ -44,6 +45,13 @@ const activityType = content => {
   }
 
   if (
+    content[0].startsWith('Depotbewertung vom') &&
+    content[1].startsWith('Kunde')
+  ){
+    return 'DepotStatementCSV';
+  }
+
+  if (
     content.indexOf('Depotauszug') >= 0 ||
     content.indexOf('Jahresdepotauszug') >= 0
   ) {
@@ -76,6 +84,16 @@ const activityType = content => {
     content[0].startsWith('Jahresdepotauszug')
   ) {
     return 'PostboxDepotStatement';
+  }
+  if (
+    content.includes('Ordermanager')
+  ){
+    return 'Ordermanager';
+  }
+  if (
+    /Ausgef.hrte Orders.*/.test(content[0])
+  ){
+    return 'OrdermanagerCSV';
   }
 };
 
@@ -465,11 +483,146 @@ const parsePostboxDepotStatement = content => {
   return activities;
 };
 
+const parseDepotStatementCSV = content => {
+  let activities = [];
+  const [date, datetime] = createActivityDateTime(
+    content[0].split(/\s+/)[2],
+    content[0].split(/\s+/)[3]
+  );
+  for(let idx = 5; idx < content.length; ++idx){
+    let line = content[idx].split(';');
+    if(isinRegex.test(line[0])){
+      /** @type {Importer.Activity} */
+      let activity = {
+        broker: 'ing',
+        type: 'TransferIn',
+        isin: line[0],
+        company: line[1],
+        date,
+        datetime,
+        shares: parseGermanNum(line[2]),
+        amount: parseGermanNum(line[12]),
+        tax: 0,
+        fee: 0,
+      };
+      activity.price = +Big(activity.amount).div(activity.shares);
+      activity = validateActivity(activity);
+      if (activity === undefined) {
+        return undefined;
+      }
+      activities.push(activity);
+    }
+  }
+  return activities;
+};
+
+const parseOrderManager = content => {
+  let activities = [];
+  let idx = content.indexOf('Status')+1;
+  if(!idx || idx < 2){
+    return undefined;
+  }
+  while (idx < content.length) {
+    /** @type {Importer.ActivityTypeUnion} */
+    let type;
+    if(content[idx] === 'Kauf'){
+      type = 'Buy';
+    } else if(content[idx] === 'Verkauf'){
+      type = 'Sell';
+    } else {
+      break;
+    }
+    let [date, datetime] = createActivityDateTime(
+      content[idx+1]
+    );
+    if(!isinRegex.test(content[idx+4])){
+      return undefined;
+    }
+    /** @type {Number} */
+    let shares = parseGermanNum(content[idx+5]);
+    /** @type {Number} */
+    let priceLastDot = content[idx+8].lastIndexOf('.');
+    /** @type {Number} */
+    let price = parseGermanNum(content[idx+8].substring(0, priceLastDot));
+
+    /** @type {Importer.Activity} */
+    let activity = {
+      broker: 'ing',
+      type: type,
+      isin: content[idx+4],
+      company: content[idx+3],
+      date,
+      datetime,
+      shares: shares,
+      amount: +Big(shares).times(price),
+      price: price,
+      tax: 0,
+      fee: 0,
+    };
+    activity = validateActivity(activity);
+    if (activity === undefined) {
+      return undefined;
+    }
+    activities.push(activity);
+    idx += 10;
+  }
+  return activities;
+};
+
+const parseOrderManagerCSV = content => {
+  let activities = [];
+  for(let idx = 5; idx < content.length; ++idx){
+    let line = content[idx].split(';');
+    /** @type {Importer.ActivityTypeUnion} */
+    let type;
+    if(line[0] == 'Kauf'){
+      type = 'Buy';
+    } else if(line[0] == 'Verkauf'){
+      type = 'Sell';
+    } else {
+      continue;
+    }
+    let [date, datetime] = createActivityDateTime(
+      line[1]
+    );
+    /** @type {Number} */
+    let shares = parseGermanNum(line[5]);
+    /** @type {Number} */
+    let price = parseGermanNum(line[11]);
+
+    /** @type {Importer.Activity} */
+    let activity = {
+      broker: 'ing',
+      type: type,
+      isin: line[3],
+      company: line[4],
+      date,
+      datetime,
+      shares: shares,
+      price: price,
+      amount: +Big(shares).times(price),
+      tax: 0,
+      fee: 0,
+    };
+    activity = validateActivity(activity);
+    if (activity === undefined) {
+      return undefined;
+    }
+    activities.push(activity);
+  }
+  return activities;
+};
+
 export const canParseDocument = (pages, extension) => {
+  let flattenPages = pages.flat();
   return (
-    extension === 'pdf' &&
+    (extension === 'pdf' &&
     pages[0].some(line => line.toLowerCase().includes('ing-diba')) &&
-    activityType(pages.flat()) !== undefined
+    activityType(flattenPages) !== undefined) ||
+    (extension === 'csv' &&
+    (flattenPages[0].startsWith('Depotbewertung vom') &&
+    flattenPages[1].startsWith('Kunde')) ||
+    /Ausgef.hrte Orders.*/.test(flattenPages[0]))
   );
 };
 
@@ -482,6 +635,12 @@ export const parsePages = contents => {
     activities = parseDepotStatement(contentsFlat);
   } else if (type === 'PostboxDepotStatement') {
     activities = parsePostboxDepotStatement(contentsFlat);
+  } else if (type === 'DepotStatementCSV') {
+    activities = parseDepotStatementCSV(contentsFlat);
+  } else if (type === 'Ordermanager') {
+    activities = parseOrderManager(contentsFlat);
+  } else if (type === 'OrdermanagerCSV') {
+    activities = parseOrderManagerCSV(contentsFlat);
   } else {
     // Information regarding dividends can be split across multiple pdf pages
     activities = [parseBuySellDividend(contentsFlat, type)];

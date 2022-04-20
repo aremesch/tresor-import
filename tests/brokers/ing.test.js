@@ -9,6 +9,9 @@ import {
   paybackSamples,
   depotStatement,
   postboxDepotStatement,
+  depotStatementCSV,
+  orderManager,
+  orderManagerCSV
 } from './__mocks__/ing';
 import { ParqetDocumentError } from '../../src/errors';
 
@@ -669,6 +672,209 @@ describe('Broker: ING', () => {
         shares: 25,
         price: 182.94,
         amount: 4573.5,
+        fee: 0,
+        tax: 0,
+      });
+    });
+  });
+
+  describe('Depot Statement CSV', () => {
+    test('Can parse depotStatementCSV 1', () => {
+      const result = ing.parsePages(depotStatementCSV[0]);
+      expect(result.status).toEqual(0);
+      expect(result.activities.length).toEqual(3);
+      expect(result.activities[0]).toEqual({
+        broker: 'ing',
+        type: 'TransferIn',
+        date: '2022-04-01',
+        datetime: '2022-04-01T18:05:00.000Z',
+        isin: 'IE00BFNM3P36',
+        company: 'ISHSIV-MSCI EM IMI ES.DLA',
+        shares: 83.18334,
+        price: 5.805970282030032,
+        amount: 482.96,
+        fee: 0,
+        tax: 0,
+      });
+
+      expect(result.activities[2]).toEqual({
+        broker: 'ing',
+        type: 'TransferIn',
+        date: '2022-04-01',
+        datetime: '2022-04-01T18:05:00.000Z',
+        isin: 'IE00BFNM3J75',
+        company: 'ISHSIV-MSCI WLD ESG S.DLA',
+        shares: 170.83069,
+        amount: 1207.60,
+        price: 7.068987428429868,
+        fee: 0,
+        tax: 0,
+      });
+    });
+    test('Can parse depotStatementCSV 2', () => {
+      const result = ing.parsePages(depotStatementCSV[1]);
+      expect(result.status).toEqual(0);
+      expect(result.activities.length).toEqual(20);
+      expect(result.activities[0]).toEqual({
+        broker: 'ing',
+        type: 'TransferIn',
+        date: '2021-09-30',
+        datetime: '2021-09-30T12:01:00.000Z',
+        isin: 'GB00BZ09BD16',
+        company: 'ATLASSIAN CORP. A DL -,10',
+        shares: 6,
+        amount: 2004.90,
+        price: 334.15,
+        fee: 0,
+        tax: 0,
+      });
+
+      expect(result.activities[4]).toEqual({
+        broker: 'ing',
+        type: 'TransferIn',
+        date: '2021-09-30',
+        datetime: '2021-09-30T12:01:00.000Z',
+        isin: 'IE00B1FZS350',
+        company: 'ISHSII-DEV.MKT.PR.Y.DLDIS',
+        shares: 23,
+        price: 24.41521739130435,
+        amount: 561.55,
+        fee: 0,
+        tax: 0,
+      });
+    });
+  });
+
+  describe('Ordermanager', () => {
+    test('Can parse Ordermanager 1', () => {
+      const result = ing.parsePages(orderManager[0]);
+      expect(result.status).toEqual(0);
+      expect(result.activities.length).toEqual(6);
+      expect(result.activities[0]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2022-04-01',
+        datetime: '2022-04-01T' + result.activities[0].datetime.substring(11),
+        isin: 'IE00BFNM3P36',
+        company: 'ISHSIV-MSCI EM IMI ES.DLA',
+        shares: 10.2459,
+        price: 5.856,
+        amount: 59.9999904,
+        fee: 0,
+        tax: 0,
+      });
+
+      expect(result.activities[2]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2022-04-01',
+        datetime: '2022-04-01T' + result.activities[0].datetime.substring(11),
+        isin: 'IE00BFNM3D14',
+        company: 'ISHSIV-MSCI EUR.ESG S.EOA',
+        shares: 5.84283,
+        price: 6.846,
+        amount: 40.00001418,
+        fee: 0,
+        tax: 0,
+      });
+    });
+
+    test('Can parse Ordermanager 2', () => {
+      const result = ing.parsePages(orderManager[1]);
+      expect(result.status).toEqual(0);
+      expect(result.activities.length).toEqual(10);
+      expect(result.activities[0]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2021-02-15',
+        datetime: '2021-02-15T' + result.activities[0].datetime.substring(11),
+        isin: 'LU1602144229',
+        company: 'AIS-AM.MSCI WD.CL.TR.UED',
+        shares: 0.1548,
+        price: 323.00,
+        amount: 50.0004,
+        fee: 0,
+        tax: 0,
+      });
+
+      expect(result.activities[9]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2020-12-21',
+        datetime: '2020-12-21T' + result.activities[0].datetime.substring(11),
+        isin: 'US62914V1061',
+        company: 'NIO INC.A S.ADR DL-,00025',
+        shares: 1,
+        price: 39.10,
+        amount: 39.10,
+        fee: 0,
+        tax: 0,
+      });
+    });
+  });
+
+  describe('OrdermanagerCSV', () => {
+    test('Can parse OrdermanagerCSV 1', () => {
+      const result = ing.parsePages(orderManagerCSV[0]);
+      expect(result.status).toEqual(0);
+      expect(result.activities.length).toEqual(6);
+      expect(result.activities[0]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2022-04-01',
+        datetime: '2022-04-01T' + result.activities[0].datetime.substring(11),
+        isin: 'IE00BFNM3P36',
+        company: 'ISHSIV-MSCI EM IMI ES.DLA',
+        shares: 10.2459,
+        price: 5.856,
+        amount: 59.9999904,
+        fee: 0,
+        tax: 0,
+      });
+
+      expect(result.activities[2]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2022-04-01',
+        datetime: '2022-04-01T' + result.activities[0].datetime.substring(11),
+        isin: 'IE00BFNM3D14',
+        company: 'ISHSIV-MSCI EUR.ESG S.EOA',
+        shares: 5.84283,
+        price: 6.846,
+        amount: 40.00001418,
+        fee: 0,
+        tax: 0,
+      });
+    });
+
+    test('Can parse OrdermanagerCSV 2', () => {
+      const result = ing.parsePages(orderManagerCSV[1]);
+      expect(result.status).toEqual(0);
+      expect(result.activities.length).toEqual(7);
+      expect(result.activities[0]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2022-01-03',
+        datetime: '2022-01-03T' + result.activities[0].datetime.substring(11),
+        isin: 'IE00BM67HT60',
+        company: 'X(IE)-MSCI WO.IN.TE. 1CDL',
+        shares: 2.49917,
+        price: 60.02,
+        amount: 150.0001834,
+        fee: 0,
+        tax: 0,
+      });
+
+      expect(result.activities[6]).toEqual({
+        broker: 'ing',
+        type: 'Buy',
+        date: '2022-01-03',
+        datetime: '2022-01-03T' + result.activities[0].datetime.substring(11),
+        isin: 'IE00BM67HN09',
+        company: 'X(IE)-MSCI WO.CO.ST. 1CDL',
+        shares: 2.42925,
+        price: 41.165,
+        amount: 100.00007625,
         fee: 0,
         tax: 0,
       });

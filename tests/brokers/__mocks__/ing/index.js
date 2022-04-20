@@ -46,3 +46,18 @@ export const postboxDepotStatement = [
   require('./postboxDepotStatement/statement1.json'),
   require('./postboxDepotStatement/statement2.json'),
 ];
+
+export const depotStatementCSV = [
+  require('./depotStatementCSV/sample1.json'),
+  require('./depotStatementCSV/sample2.json')
+];
+
+export const orderManager = [
+  require('./orderManager/sample1.json'),
+  require('./orderManager/sample2.json')
+];
+
+export const orderManagerCSV = [
+  require('./orderManagerCSV/sample1.json'),
+  require('./orderManagerCSV/sample2.json')
+];

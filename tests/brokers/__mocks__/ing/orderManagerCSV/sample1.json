@@ -1,0 +1,13 @@
+[
+    "Ausgef�hrte Orders vom 02.04.2022 10:28;Kunde;Xxxxx Xxxx",
+    "",
+    "Depotnummer;Xxxxxxx",
+    "",
+    "Orderart;Ausf�hrungsdatum;Ordernummer;ISIN;Wertpapiername;St�ck/Nominale;Einheitskennzeichen;Limit;Start Buy/Stop Loss;Abstand;Limittyp;Ausf�hrungskurs;W�hrung;Status",
+    "Kauf;01.04.2022;249300298;IE00BFNM3P36;ISHSIV-MSCI EM IMI ES.DLA;10,2459;St�ck;;;;Billigst;5,856;EUR;Ausgef�hrt",
+    "Kauf;01.04.2022;249182483;IE00BFNM3J75;ISHSIV-MSCI WLD ESG S.DLA;21,13271;St�ck;;;;Billigst;7,098;EUR;Ausgef�hrt",
+    "Kauf;01.04.2022;249147064;IE00BFNM3D14;ISHSIV-MSCI EUR.ESG S.EOA;5,84283;St�ck;;;;Billigst;6,846;EUR;Ausgef�hrt",
+    "Kauf;01.03.2022;245145743;IE00BFNM3P36;ISHSIV-MSCI EM IMI ES.DLA;10,1833;St�ck;;;;Billigst;5,892;EUR;Ausgef�hrt",
+    "Kauf;01.03.2022;245125075;IE00BFNM3J75;ISHSIV-MSCI WLD ESG S.DLA;21,96515;St�ck;;;;Billigst;6,829;EUR;Ausgef�hrt",
+    "Kauf;01.03.2022;245088070;IE00BFNM3D14;ISHSIV-MSCI EUR.ESG S.EOA;5,90232;St�ck;;;;Billigst;6,777;EUR;Ausgef�hrt"
+]
