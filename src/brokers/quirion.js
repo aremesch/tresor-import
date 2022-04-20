@@ -49,7 +49,7 @@ const parseIsin = possibleIsin => {
   return match[0];
 };
 
-const findIsinAndAmountInLine = line => {
+const findIsinAndSharesInLine = line => {
   const [possibleIsin, ...potentialShares] = line.split(',');
 
   const isin = parseIsin(possibleIsin);
@@ -66,7 +66,7 @@ const findIsinAndAmountInLine = line => {
   };
 };
 
-const findNextBuyOrSell = (flatContent, index) => {
+const findNextStatementPosition = (flatContent, index) => {
   /** @type {Importer.ActivityTypeUnion} */
   let type;
 
@@ -85,6 +85,12 @@ const findNextBuyOrSell = (flatContent, index) => {
       break;
     }
 
+    // The statement also includes information about dividends.
+    if (flatContent[index] === 'Erträgnisabrechn') {
+      type = 'Dividend';
+      break;
+    }
+
     index++;
   }
 
@@ -96,34 +102,49 @@ const findNextBuyOrSell = (flatContent, index) => {
   const activity = {
     broker: BROKER_NAME,
     type,
-    // No information about fee and tax in the Kontoauszug
+    // No information about fee and tax in the Statement, except we parse a Dividend position.
+    // Tax will then be added at the bottom of this method.
     fee: 0,
     tax: 0,
-    // Price is negativ
-    amount: +Big(parseGermanNum(flatContent[index - 4])).mul(
-      type === 'Buy' ? -1 : 1
-    ),
+    amount: +Big(parseGermanNum(flatContent[index - 4])).abs(),
   };
+
+  const currency = flatContent[index - 3];
+
+  if (currency !== 'EUR') {
+    throw new Error(
+      'Other currencies are not supported yet. Please submit a ticket.'
+    );
+  }
 
   [activity.date, activity.datetime] = createActivityDateTime(
     flatContent[index - 1]
   );
 
   // Skip "Wertpapier Kauf", "Ref" and ".: <Number of Ref>"
-  index += type === 'Buy' ? 3 : 4;
+  index += type === 'Buy' || type === 'Dividend' ? 3 : 4;
 
   const partialName = [];
   let isinAndShares;
 
-  while (!(isinAndShares = findIsinAndAmountInLine(flatContent[index]))) {
+  while (!(isinAndShares = findIsinAndSharesInLine(flatContent[index]))) {
     partialName.push(flatContent[index]);
     index++;
   }
 
+  if (type === 'Dividend') {
+    index++; // we are now at KEST
+
+    activity.tax = findStatementDividendTax(flatContent, index);
+
+    // We now need to add the tax to the amount, because the amount in the statement is without tax calculated.
+    activity.amount = +Big(activity.amount).plus(activity.tax).abs();
+  }
+
   activity.company = partialName.join('');
   activity.isin = isinAndShares.isin;
-  activity.shares = +Big(isinAndShares.shares).mul(type === 'Sell' ? -1 : 1);
-  activity.price = +Big(activity.amount).div(activity.shares);
+  activity.shares = +Big(isinAndShares.shares).abs();
+  activity.price = +Big(activity.amount).div(activity.shares).abs().round(4, 0); // round down to 4 digits
 
   return {
     activity: validateActivity(activity),
@@ -131,20 +152,48 @@ const findNextBuyOrSell = (flatContent, index) => {
   };
 };
 
-const createActivitiesForBuyOrSell = flatContent => {
+const findStatementDividendTax = (content, index) => {
+  // We're looking for:
+  // "KEST",
+  // ": EUR -0,43, SOLI:",
+  // "EUR -0,02",
+
+  if (content[index] !== 'KEST') {
+    return 0;
+  }
+
+  const kapitalertragssteuerMatch = content[index + 1].match(/(-\d+,\d+)/);
+  const soliMatch = content[index + 2].match(/(-\d+,\d+)/);
+
+  if (!kapitalertragssteuerMatch || !soliMatch) {
+    return undefined;
+  }
+
+  const possibleKapitalertragssteuer = kapitalertragssteuerMatch[0];
+  const possibleSoli = soliMatch[0];
+
+  // No information about Kirchensteuer here
+
+  // Taxes are negativ
+  return +Big(parseGermanNum(possibleKapitalertragssteuer))
+    .plus(parseGermanNum(possibleSoli))
+    .mul(-1);
+};
+
+const createActivitiesForStatement = flatContent => {
   const activities = [];
 
   let currentIndex = 0;
 
   while (currentIndex < flatContent.length) {
-    const buy = findNextBuyOrSell(flatContent, currentIndex);
+    const position = findNextStatementPosition(flatContent, currentIndex);
 
-    if (buy === undefined) {
+    if (position === undefined) {
       break;
     }
 
-    activities.push(buy.activity);
-    currentIndex = buy.index + 1;
+    activities.push(position.activity);
+    currentIndex = position.index + 1;
   }
 
   return activities;
@@ -179,13 +228,15 @@ const findDividendIsin = content => {
   return parseIsin(possibleIsin);
 };
 
-const findDividendWkn = content => {
+// Within the statement, there is also a Dividend information, without WKN information.
+// To create an identical activity to recognise duplicates, we do not add the WKN here.
+/*const findDividendWkn = content => {
   // We're looking for:
   // "DBX0PR",
   // "WKN",
 
   return findTextByIndex(content, 'WKN', -1);
-};
+};*/
 
 const findDividendShares = content => {
   // We're looking for:
@@ -320,6 +371,31 @@ const findDividendCompany = content => {
   return partialCompany.join('');
 };
 
+const findDividendCurrency = content => {
+  // We're looking for:
+  // "USD",
+  // "Währ",
+  // "ung",
+
+  return findTextByIndex(content, 'Währ', -1);
+};
+
+const findDividendFxRate = content => {
+  // We're looking for:
+  // "1,123100",
+  // "EUR/USD",
+  // "De",
+  // "visenkurs",
+
+  const fxRate = findTextByIndex(content, 'visenkurs', -3);
+
+  if (fxRate === undefined) {
+    return undefined;
+  }
+
+  return +Big(parseGermanNum(fxRate));
+};
+
 const createActivitiesForDividend = flatContent => {
   /** @type {Importer.ActivityTypeUnion} */
   let type = 'Dividend';
@@ -332,11 +408,28 @@ const createActivitiesForDividend = flatContent => {
     company: findDividendCompany(flatContent),
     tax: findDividendTax(flatContent),
     isin: findDividendIsin(flatContent),
-    wkn: findDividendWkn(flatContent),
+    // Within the statement, there is also a Dividend information, without WKN information.
+    // To create an identical activity to recognise duplicates, we do not add the WKN here.
+    // wkn: findDividendWkn(flatContent),
     shares: findDividendShares(flatContent),
     price: findDividendPrice(flatContent),
     amount: findDividendAmount(flatContent),
   };
+
+  const currency = findDividendCurrency(flatContent);
+
+  if (currency !== 'EUR') {
+    activity.foreignCurrency = currency;
+    activity.fxRate = findDividendFxRate(flatContent);
+
+    if (activity.fxRate === undefined) {
+      throw new Error('fxRate not found. Please submit a ticket.');
+    }
+
+    activity.price = +Big(activity.price).div(activity.fxRate).round(4, 0);
+    activity.tax = +Big(activity.tax).div(activity.fxRate).round(4, 0);
+    activity.amount = +Big(activity.amount).div(activity.fxRate).round(4, 0);
+  }
 
   [activity.date, activity.datetime] = findDividendDate(flatContent);
 
@@ -344,8 +437,8 @@ const createActivitiesForDividend = flatContent => {
 };
 
 const parseData = flatContent => {
-  if (isDocumentBuyOrSell(flatContent)) {
-    return createActivitiesForBuyOrSell(flatContent);
+  if (isDocumentStatement(flatContent)) {
+    return createActivitiesForStatement(flatContent);
   }
 
   if (isDocumentDividend(flatContent)) {
@@ -376,16 +469,11 @@ const hasClutteredText = (content, startText, length, textToFind) => {
   return combinedText === textToFind;
 };
 
-const isDocumentBuyOrSell = content => {
+const isDocumentStatement = content => {
   // We're looking for the following four consecutive entries
-  // "Wertpapier",
-  // "Verkauf",
-  // or
-  // "Wertpapier Kauf"
-  return (
-    content.includes('Wertpapier Kauf') ||
-    hasClutteredText(content, 'Wertpapier', 2, 'Wertpapier Verkauf')
-  );
+  // "Kontoauszug"
+
+  return content.includes('Kontoauszug');
 };
 const isDocumentDividend = content => {
   // We're looking for the following four consecutive entries
@@ -414,7 +502,7 @@ export const canParseDocument = (pages, extension) => {
   return (
     extension === 'pdf' &&
     isQuirinCompany &&
-    (isDocumentBuyOrSell(firstPageContent) ||
+    (isDocumentStatement(firstPageContent) ||
       isDocumentDividend(firstPageContent))
   );
 };
