@@ -16,7 +16,7 @@ describe('Broker: ffb', () => {
   validateAllSamples(ffb, allSamples, 'ffb');
 
   describe('Validate buys', () => {
-    test('Should map pdf data of sample correctly: saving_plan', () => {
+    test('Should map pdf data of sample correctly: buy_1', () => {
       const activities = ffb.parsePages(buySamples[0]).activities;
 
       expect(activities.length).toEqual(1);
@@ -38,7 +38,7 @@ describe('Broker: ffb', () => {
       });
     });
 
-    test('Should map pdf data of sample correctly: buy_fund_1', () => {
+    test('Should map pdf data of sample correctly: buy_2', () => {
       const activities = ffb.parsePages(buySamples[1]).activities;
 
       expect(activities.length).toEqual(1);
@@ -57,7 +57,7 @@ describe('Broker: ffb', () => {
         tax: 0,
       });
     });
-    test('Should map pdf data of sample correctly: buy_fund_comgest_growth', () => {
+    test('Should map pdf data of sample correctly: buy_3', () => {
       const activities = ffb.parsePages(buySamples[2]).activities;
 
       expect(activities.length).toEqual(1);
@@ -77,7 +77,7 @@ describe('Broker: ffb', () => {
       });
     });
 
-    test('Should map pdf data of sample correctly: buy_exchange_1', () => {
+    test('Should map pdf data of sample correctly: buy_4', () => {
       const activities = ffb.parsePages(buySamples[3]).activities;
 
       expect(activities.length).toEqual(1);
@@ -96,6 +96,25 @@ describe('Broker: ffb', () => {
         tax: 0,
         foreignCurrency: 'USD',
         fxRate: 1.175849,
+      });
+    });
+    test('Should map pdf data of sample correctly: buy_5', () => {
+      const activities = ffb.parsePages(buySamples[4]).activities;
+
+      expect(activities.length).toEqual(1);
+      expect(activities[0]).toEqual({
+        broker: 'ffb',
+        type: 'Buy',
+        date: '2021-04-01',
+        datetime: '2021-04-01T10:00:00.000Z',
+        isin: 'DE000A1W2CK8',
+        wkn: 'A1W2CK',
+        company: 'GLS Bank Aktienfonds A',
+        shares: 56.294,
+        price: 88.81941237076775,
+        amount: 5000,
+        fee: 0,
+        tax: 0,
       });
     });
   });
@@ -259,64 +278,149 @@ describe('Broker: ffb', () => {
       });
     });
 
-    describe('Validate entgeltbelastung', () => {
-      test('Should map pdf data of sample correctly: entgeltbelastung_1', () => {
-        const activities = ffb.parsePages(entgeltbelastung[0]).activities;
-        expect(activities.length).toEqual(1);
-        expect(activities[0]).toEqual({
-          broker: 'ffb',
-          type: 'Sell',
-          date: '2020-07-13',
-          datetime: '2020-07-13T10:00:00.000Z',
-          isin: 'AT0000722673',
-          wkn: '632988',
-          company: 'KEPLER Europa Rentenfonds (T)',
-          shares: 0.004,
-          price: 142.5,
-          amount: 0.57,
-          fee: 0.57,
-          tax: 0,
-        });
+    test('Should map pdf data of sample correctly: splittkauf_1', () => {
+      const activities = ffb.parsePages(multipleTransactions[2]).activities;
+      expect(activities.length).toEqual(4);
+      expect(activities[0]).toEqual({
+        broker: 'ffb',
+        type: 'Buy',
+        date: '2020-05-04',
+        datetime: '2020-05-04T10:00:00.000Z',
+        isin: 'LU0079474960',
+        wkn: '986838',
+        company: 'AB SICAV I Amer.Grwt.PF.A',
+        shares: 0.46,
+        price: 108.69565217391305,
+        amount: 50.0,
+        fee: 0,
+        tax: 0,
+        foreignCurrency: 'USD',
+        fxRate: 1.083441,
+      });
+      expect(activities[1]).toEqual({
+        broker: 'ffb',
+        type: 'Buy',
+        date: '2020-05-04',
+        datetime: '2020-05-04T10:00:00.000Z',
+        isin: 'LU0689472784',
+        wkn: 'A1JLXZ',
+        company: 'AGIF-Allianz Inc a. Gwth ATUSD',
+        shares: 3.041,
+        price: 16.44195988161789,
+        amount: 50.0,
+        fee: 0,
+        tax: 0,
+        foreignCurrency: 'USD',
+        fxRate: 1.072795,
+      });
+      expect(activities[2]).toEqual({
+        broker: 'ffb',
+        type: 'Buy',
+        date: '2020-05-04',
+        datetime: '2020-05-04T10:00:00.000Z',
+        isin: 'LU0122379950',
+        wkn: '630928',
+        company: 'BGF-World Healthsc.Fund A2 USD',
+        shares: 1.025,
+        price: 48.78048780487804878,
+        amount: 50.0,
+        fee: 0,
+        tax: 0,
+        foreignCurrency: 'USD',
+        fxRate: 1.083441,
+      });
+      expect(activities[3]).toEqual({
+        broker: 'ffb',
+        type: 'Buy',
+        date: '2020-05-04',
+        datetime: '2020-05-04T10:00:00.000Z',
+        isin: 'LU0345361124',
+        wkn: 'A0NFGE',
+        company: 'FF Asia Pac.Opp.Fd.AACCEUR',
+        shares: 2.19,
+        price: 22.83105022831050228,
+        amount: 50.0,
+        fee: 0,
+        tax: 0,
       });
     });
-    describe('Validate reinvest from dividends', () => {
-      test('Should map pdf data of sample correctly: wiederanlage_1', () => {
-        const activities = ffb.parsePages(wiederanlage[0]).activities;
-        expect(activities.length).toEqual(1);
-        expect(activities[0]).toEqual({
-          broker: 'ffb',
-          type: 'Buy',
-          date: '2019-12-27',
-          datetime: '2019-12-27T11:00:00.000Z',
-          isin: 'AT0000722640',
-          wkn: '632986',
-          company: 'KEPLER Vorsorge Mixfonds (T)',
-          shares: 0.035,
-          price: 150.57142857142858,
-          amount: 5.27,
-          fee: 0,
-          tax: 0,
-        });
+  });
+
+  describe('Validate entgeltbelastung', () => {
+    test('Should map pdf data of sample correctly: entgeltbelastung_1', () => {
+      const activities = ffb.parsePages(entgeltbelastung[0]).activities;
+      expect(activities.length).toEqual(1);
+      expect(activities[0]).toEqual({
+        broker: 'ffb',
+        type: 'Sell',
+        date: '2020-07-13',
+        datetime: '2020-07-13T10:00:00.000Z',
+        isin: 'AT0000722673',
+        wkn: '632988',
+        company: 'KEPLER Europa Rentenfonds (T)',
+        shares: 0.004,
+        price: 142.5,
+        amount: 0.57,
+        fee: 0.57,
+        tax: 0,
       });
     });
-    describe('Validate dividends', () => {
-      test('Should map pdf data of sample correctly: ausschuettung_1', () => {
-        const activities = ffb.parsePages(ausschuettung[0]).activities;
-        expect(activities.length).toEqual(1);
-        expect(activities[0]).toEqual({
-          broker: 'ffb',
-          type: 'Dividend',
-          date: '2020-11-24',
-          datetime: '2020-11-24T11:00:00.000Z',
-          isin: 'DE0009848119',
-          wkn: '984811',
-          company: 'DWS Top Dividende',
-          shares: 114.085,
-          price: 3.649997808651444,
-          amount: 416.41,
-          fee: 0,
-          tax: 0,
-        });
+  });
+  describe('Validate reinvest from dividends', () => {
+    test('Should map pdf data of sample correctly: wiederanlage_1', () => {
+      const activities = ffb.parsePages(wiederanlage[0]).activities;
+      expect(activities.length).toEqual(1);
+      expect(activities[0]).toEqual({
+        broker: 'ffb',
+        type: 'Buy',
+        date: '2019-12-27',
+        datetime: '2019-12-27T11:00:00.000Z',
+        isin: 'AT0000722640',
+        wkn: '632986',
+        company: 'KEPLER Vorsorge Mixfonds (T)',
+        shares: 0.035,
+        price: 150.57142857142858,
+        amount: 5.27,
+        fee: 0,
+        tax: 0,
+      });
+    });
+  });
+  describe('Validate dividends', () => {
+    test('Should map pdf data of sample correctly: ausschuettung_1', () => {
+      const activities = ffb.parsePages(ausschuettung[0]).activities;
+      expect(activities.length).toEqual(1);
+      expect(activities[0]).toEqual({
+        broker: 'ffb',
+        type: 'Dividend',
+        date: '2020-11-24',
+        datetime: '2020-11-24T11:00:00.000Z',
+        isin: 'DE0009848119',
+        wkn: '984811',
+        company: 'DWS Top Dividende',
+        shares: 114.085,
+        price: 3.649997808651444,
+        amount: 416.41,
+        fee: 0,
+        tax: 0,
+      });
+    });
+    test('Should map pdf data of sample correctly: ausschuettung_2_with_tax', () => {
+      const activities = ffb.parsePages(ausschuettung[1]).activities;
+      expect(activities.length).toEqual(1);
+      expect(activities[0]).toEqual({
+        broker: 'ffb',
+        type: 'Dividend',
+        date: '2022-02-08',
+        datetime: '2022-02-08T11:00:00.000Z',
+        isin: 'LU1136260384',
+        wkn: 'A12EXH',
+        company: 'green benefit FCP-Gl.Imp.Fd. P',
+        shares: 1.915,
+        price: 5.671018276762402,
+        amount: 10.86,
+        fee: 0,
+        tax: 2,
       });
     });
   });

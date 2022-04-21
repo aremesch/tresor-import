@@ -23,7 +23,7 @@ const findDateBuySell = (textArr, startLine) => {
 const findFee = (textArr, startLine) => {
   let fee = 0;
   //Every transaction/dividend statement has a maximum span of 45 lines
-  for (let line = 0; line < 45; line++) {
+  for (let line = 0; line < 40 && startLine + line < textArr.length; line++) {
     //Fee is below the line titled "Trasaktionskosten", otherwise zero.
     if (textArr[startLine + line].startsWith('Transaktionskosten')) {
       fee = parseGermanNum(textArr[startLine + line + 1]);
@@ -37,7 +37,7 @@ const findTax = (textArr, startLine) => {
   let kest = 0,
     soli = 0,
     kist = 0;
-  for (let line = 0; line < 45; line++) {
+  for (let line = 0; line < 40 && startLine + line < textArr.length; line++) {
     //Every transaction is searched for the three types of taxes
     //The value is definied in the line below
     if (textArr[startLine + line].endsWith('Kapitalertragsteuer')) {
@@ -70,6 +70,7 @@ const getDocumentType = content => {
   for (let lineNumber = 0; lineNumber < content.length; lineNumber++) {
     if (
       content[lineNumber].startsWith('Kauf') ||
+      content[lineNumber].startsWith('Splittkauf') ||
       content[lineNumber].startsWith('Verkauf') ||
       content[lineNumber] === 'Entgeltbelastung' ||
       //Wiederanlage is an automtatic reinvest of dividends (=buy order)
@@ -164,7 +165,7 @@ const parseData = (textArr, type, startLine, sellForFee) => {
       activity.shares = parseGermanNum(textArr[referenceLine - 4]);
       activity.amount = +Big(parseGermanNum(textArr[referenceLine + 3]));
       activity.price = +Big(activity.amount).div(activity.shares);
-      activity.tax = findFee(textArr, referenceLine);
+      activity.tax = findTax(textArr, referenceLine);
       activity.fee = 0;
       break;
     }
@@ -192,6 +193,7 @@ export const parsePages = contents => {
     for (let lineNumber = 0; lineNumber < allPagesFlat.length; lineNumber++) {
       if (
         allPagesFlat[lineNumber].startsWith('Kauf') ||
+        allPagesFlat[lineNumber].startsWith('Splittkauf') ||
         (allPagesFlat[lineNumber] === 'Wiederanlage' &&
           allPagesFlat[lineNumber + 1] !== 'zur Verfügung stehend')
       ) {
