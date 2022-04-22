@@ -70,8 +70,11 @@ const findDateSell = textArr => {
 };
 
 const findDateDividend = textArr => {
-  const searchTerm = 'VALUTA';
-  return textArr[textArr.indexOf(searchTerm) + 3];
+  let dateIdx = textArr.indexOf('VALUTA');
+  if (dateIdx < 0) {
+    dateIdx = textArr.indexOf('WERTSTELLUNG');
+  }
+  return textArr[dateIdx + 3];
 };
 
 const findShares = textArr => {
